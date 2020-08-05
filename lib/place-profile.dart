@@ -1,20 +1,32 @@
+import 'package:ZeloApp/models/Network.dart';
 import 'package:ZeloApp/order-page.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:stretchy_header/stretchy_header.dart';
 import 'package:flutter/cupertino.dart';
+import './models/Place.dart';
 
 class PlaceProfile extends StatefulWidget {
+  Place _place;
+
+  PlaceProfile(Place place) {
+    _place = place;
+  }
+
   @override
   State<StatefulWidget> createState() {
-    return new PlaceProfileState();
+    return new PlaceProfileState(_place);
   }
 }
 
 class PlaceProfileState extends State<PlaceProfile>{
-  double _height = 0;
   List<int> _selectedItems = new List();
   Map<int, int> _itemOrderCount = new Map();
+  Place _placeInfo;
+
+  PlaceProfileState(Place place) {
+    _placeInfo = place;
+  }
 
   void _makeOrder(itemIndex) {
     setState(() {
@@ -67,7 +79,7 @@ class PlaceProfileState extends State<PlaceProfile>{
               headerData: HeaderData(
                   headerHeight: 250,
                   header: Image.network(
-                    'https://realkz.com/images/icons/rest/1.jpg',
+                    Network.host + _placeInfo.wallpaper,
                     fit: BoxFit.cover,
                   ),
                   highlightHeaderAlignment: HighlightHeaderAlignment.top,
@@ -187,7 +199,7 @@ class PlaceProfileState extends State<PlaceProfile>{
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-              'Кафе \"Уют\"',
+              _placeInfo.name,
               style: GoogleFonts.capriola(
                 color: Colors.black,
                 fontSize: 24,
@@ -199,7 +211,7 @@ class PlaceProfileState extends State<PlaceProfile>{
           Padding(
             padding: EdgeInsets.only(top: 5, bottom: 5),
             child: Text(
-                "Лучшая европейская и азиатская кухня! Лучшая европейская и азиатская кухня! Лучшая европейская и азиатская кухня!",
+                _placeInfo.description,
                 style: GoogleFonts.capriola(
                   color: Colors.grey[500],
                   fontSize: 15,

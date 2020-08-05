@@ -1,16 +1,50 @@
 // Copyright 2018 The Flutter team. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:english_words/english_words.dart';
+import 'package:dio/dio.dart';
 import 'package:google_fonts/google_fonts.dart';
 import './place-profile.dart';
+import './models/Network.dart';
+import 'package:http/http.dart' as http;
+
+import 'models/Place.dart';
 
 void main() => runApp(MyApp());
 
-class RandomWordsState extends State<RandomWords> {
+class PlacesListState extends State<PlacesList> {
+
+  int _price = 400;
+  List<Place> _places = new List();
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadPlaces();
+  }
+
+  void loadPlaces() async {
+    String url = Network.host + '/places/';
+    var response = await http.get(url);
+
+    var placesJson = json.decode(response.body).cast<Map<String, dynamic>>();
+
+    var placesList = new List<Place>();
+    
+    placesJson.forEach((element) {
+      var place = Place.fromJson(element);
+      placesList.add(place);
+    });
+
+    setState(() {
+      _places = placesList;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,19 +63,19 @@ class RandomWordsState extends State<RandomWords> {
 
   Widget _buildList() {
     return ListView.builder(
-        itemCount: 10,
+        itemCount: _places.length,
         padding: const EdgeInsets.all(10.0),
         itemBuilder: (context, i) {
-          return _buildRow();
+          return _buildRow(_places[i]);
         }
     );
   }
 
-  Widget _buildRow() {
+  Widget _buildRow(Place place) {
     return InkWell(
       onTap: (){
         Navigator.push(
-            context, CupertinoPageRoute(builder: (context) => PlaceProfile()));
+            context, CupertinoPageRoute(builder: (context) => PlaceProfile(place)));
       },
 
       child: Container(
@@ -58,7 +92,7 @@ class RandomWordsState extends State<RandomWords> {
                 height: 130,
                 width: double.infinity,
                 child: Image.network(
-                  'https://realkz.com/images/icons/rest/1.jpg',
+                  Network.host + place.wallpaper,
                   fit: BoxFit.fitWidth,
                 ),
               ),
@@ -78,10 +112,11 @@ class RandomWordsState extends State<RandomWords> {
                         Container (
                           margin: EdgeInsets.only(left: 10, top: 10),
                           child: Text(
-                              "Кафе \"Уют\"",
+                              place.name,
                               style: GoogleFonts.capriola(
-                                fontSize: 16,
+                                fontSize: 18,
                                 color: Colors.grey[800],
+                                fontWeight: FontWeight.w500
                               )
                           ),
                         ),
@@ -89,7 +124,7 @@ class RandomWordsState extends State<RandomWords> {
                         Container (
                           margin: EdgeInsets.only(left: 10, right: 10),
                           child: Text(
-                              "Лучшая европейская и азиатская кухня!",
+                              place.description,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.capriola(
                                 fontSize: 14,
@@ -123,7 +158,7 @@ class RandomWordsState extends State<RandomWords> {
                           ),
 
                           Text(
-                              '400 ₸',
+                              place.deliveryMinPrice.toString() + ' ₸',
                               style: GoogleFonts.montserratAlternates(
                                 fontSize: 16,
                                 color: Colors.blue,
@@ -164,18 +199,19 @@ class RandomWordsState extends State<RandomWords> {
 
 }
 
-class RandomWords extends StatefulWidget {
+class PlacesList extends StatefulWidget {
   @override
-  RandomWordsState createState() => RandomWordsState();
+  State<StatefulWidget> createState() {
+    return new PlacesListState();
+  }
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final wordPair = WordPair.random();
     return MaterialApp(
       title: 'Welcome to Flutter',
-      home: RandomWords(),
+      home: PlacesList(),
     );
   }
 }
