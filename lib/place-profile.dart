@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:ZeloApp/models/Network.dart';
 import 'package:ZeloApp/order-page.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:stretchy_header/stretchy_header.dart';
 import 'package:flutter/cupertino.dart';
 import './models/Place.dart';
+import './models/MenuItem.dart';
+import 'package:http/http.dart' as http;
 
 class PlaceProfile extends StatefulWidget {
   Place _place;
@@ -22,10 +26,38 @@ class PlaceProfile extends StatefulWidget {
 class PlaceProfileState extends State<PlaceProfile>{
   List<int> _selectedItems = new List();
   Map<int, int> _itemOrderCount = new Map();
+  List<MenuItem> _menuItems = new List();
   Place _placeInfo;
 
   PlaceProfileState(Place place) {
     _placeInfo = place;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadMenuItems();
+  }
+
+  void loadMenuItems() async {
+    var placeID = _placeInfo.id;
+    String url = Network.host + '/menuItems/$placeID';
+    var response = await http.get(url);
+
+    var itemsJson = json.decode(response.body).cast<Map<String, dynamic>>();
+    print(itemsJson[0]);
+
+    var menuItemsList = new List<MenuItem>();
+
+    itemsJson.forEach((element) {
+      var menuItem = MenuItem.fromJson(element);
+      menuItemsList.add(menuItem);
+    });
+
+    setState(() {
+      _menuItems = menuItemsList;
+    });
   }
 
   void _makeOrder(itemIndex) {
@@ -129,13 +161,13 @@ class PlaceProfileState extends State<PlaceProfile>{
                     ),
                   )
               ),
-              itemCount: 15,
+              itemCount: _menuItems.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return _buildHeader();
                 }
 
-                return _buildMenuItem(context, index);
+                return _buildMenuItem(context, index, _menuItems[index-1]);
               },
             ),
           ),
@@ -225,7 +257,7 @@ class PlaceProfileState extends State<PlaceProfile>{
     );
   }
 
-  Widget _buildMenuItem(context, itemIndex) {
+  Widget _buildMenuItem(context, itemIndex, MenuItem menuItem) {
     return InkWell(
         onTap: () {
           _dishInfoModal(context, itemIndex);
@@ -244,7 +276,7 @@ class PlaceProfileState extends State<PlaceProfile>{
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            "Салат \"Цезарь\"",
+                            menuItem.name,
                             maxLines: 1,
                             style: GoogleFonts.capriola(
                                 fontSize: 15,
@@ -254,12 +286,12 @@ class PlaceProfileState extends State<PlaceProfile>{
                           ),
 
                           Text(
-                            'Зерновая булочка, сырный соус, халапеньо',
+                            menuItem.description,
                             maxLines: 2,
                           ),
 
                           Text(
-                            '1600 ₸',
+                            menuItem.price.toString() + ' ₸',
                             style: GoogleFonts.capriola(
                                 color: Colors.blue[300],
                                 fontSize: 15
@@ -277,7 +309,7 @@ class PlaceProfileState extends State<PlaceProfile>{
                     margin: EdgeInsets.only(right: 10, top: 10, bottom: 10),
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                          image: NetworkImage('https://www.gastronom.ru/binfiles/images/20191113/b50e9f2a.jpg'),
+                          image: NetworkImage(Network.host + menuItem.image),
                           fit: BoxFit.cover
                       ),
                       borderRadius: BorderRadius.all(Radius.circular(10.0)),
