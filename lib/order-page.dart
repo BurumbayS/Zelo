@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'map-page.dart';
 import 'package:dotted_line/dotted_line.dart';
+import './models/OrderItem.dart';
 
 enum SectionType {
   order,
@@ -41,9 +42,15 @@ extension SectionTypeExtension on SectionType {
 }
 
 class OrderPage extends StatefulWidget{
+  List<OrderItem> _orderItems;
+
+  OrderPage(List<OrderItem> items) {
+    _orderItems = items;
+  }
+
   @override
   State<StatefulWidget> createState() {
-    return new OrderPageState();
+    return new OrderPageState(_orderItems);
   }
 }
 
@@ -52,14 +59,45 @@ class OrderPageState extends State<OrderPage> {
   String _contactNumber = '';
   int _section = 0;
   int _row = 0;
-  int _itemsCount = 9;
   List<SectionType> _sections = [SectionType.order, SectionType.address, SectionType.contactNumber, SectionType.payment];
+  List<OrderItem> _orderItems;
 
   final _phoneTextFieldController = TextEditingController();
   FocusNode _focus = new FocusNode();
 
   bool _orderCompleted() {
     return (_address.firstAddress != '' && _contactNumber.length == 11);
+  }
+
+  int _itemsCount() {
+    var itemsCount = 0;
+
+    _sections.forEach((section) {
+      itemsCount++;
+      itemsCount += (section == SectionType.order) ? _orderItems.length : section.rowCount;
+    });
+
+    return itemsCount;
+  }
+
+  void _increaseOrderCount(OrderItem item) {
+    setState(() {
+      item.count++;
+    });
+  }
+
+  void _decreaseOrderCount(OrderItem item) {
+    setState(() {
+      item.count--;
+      if (item.count == 0) {
+        _orderItems[_menuItems[itemIndex].id] = null;
+        _selectedItemsCount--;
+      }
+    });
+  }
+
+  OrderPageState(List<OrderItem> items) {
+    _orderItems = items;
   }
 
   @override
@@ -85,11 +123,16 @@ class OrderPageState extends State<OrderPage> {
         child: Stack (
           children: <Widget>[
             ListView.builder(
-                itemCount: _itemsCount,
+                itemCount: _itemsCount(),
                 padding: const EdgeInsets.only(left: 10, right: 10, top: 10, bottom: 120),
                 itemBuilder: (context, i) {
                   SectionType currentSection = _sections[_section];
 
+                  if (currentSection == SectionType.order && _row > _orderItems.length) {
+                    (_section == _sections.length - 1) ? _section = 0 : _section++;
+                    currentSection = _sections[_section];
+                    _row = 0;
+                  } else
                   if (_row > currentSection.rowCount) {
                     (_section == _sections.length - 1) ? _section = 0 : _section++;
                     currentSection = _sections[_section];
@@ -105,7 +148,7 @@ class OrderPageState extends State<OrderPage> {
 
                   switch (_sections[_section]) {
                     case SectionType.order:
-                      return _orderItem(context);
+                      return _orderItem(context, _orderItems[_row - 2]);
                     case SectionType.address:
                       return _addressItem();
                     case SectionType.contactNumber:
@@ -190,7 +233,7 @@ class OrderPageState extends State<OrderPage> {
     );
   }
 
-  Widget _orderItem(context) {
+  Widget _orderItem(context, OrderItem item) {
     return InkWell(
       child: Column (
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,7 +244,7 @@ class OrderPageState extends State<OrderPage> {
               Padding(
                 padding: EdgeInsets.only(left: 16, right: 10),
                 child: Text(
-                  '1x',
+                  item.count.toString() + 'x',
                   style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold
@@ -211,7 +254,7 @@ class OrderPageState extends State<OrderPage> {
 
               Expanded(
                   child: Text(
-                    'Салат \"Цезарь\"',
+                    item.name,
 //              maxLines: 2,
                     style: GoogleFonts.capriola(
                         fontSize: 16
@@ -222,7 +265,7 @@ class OrderPageState extends State<OrderPage> {
               Padding(
                 padding: EdgeInsets.only(right: 16),
                 child: Text(
-                  'KZT 2041',
+                  'KZT ' + item.totalPrice().toString(),
                   style: TextStyle(
                       fontSize: 18
                   ),
@@ -236,23 +279,33 @@ class OrderPageState extends State<OrderPage> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Container(
-                  margin: EdgeInsets.only(left: 16),
-                  height: 20,
-                  width: 20,
-                  child: Image.asset('assets/images/minus.png'),
+                GestureDetector(
+                  onTap: () {
+
+                  },
+                  child: Container(
+                    margin: EdgeInsets.only(left: 16),
+                    height: 20,
+                    width: 20,
+                    child: Image.asset('assets/images/minus.png'),
+                  ),
                 ),
 
                 Expanded(
                     child: Container()
                 ),
 
-                Container(
-                  margin: EdgeInsets.only(right: 16),
-                  height: 20,
-                  width: 20,
-                  child: Image.asset('assets/images/plus.png'),
-                ),
+                GestureDetector(
+                  onTap: () {
+
+                  },
+                  child: Container(
+                    margin: EdgeInsets.only(right: 16),
+                    height: 20,
+                    width: 20,
+                    child: Image.asset('assets/images/plus.png'),
+                  ),
+                )
               ],
             ),
           ),

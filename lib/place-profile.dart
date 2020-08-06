@@ -142,6 +142,23 @@ class PlaceProfileState extends State<PlaceProfile>{
     return '$totalCount  за  $totalPrice KZT';
   }
 
+  void goToOrderPage() {
+    List<OrderItem> selectedOrderItems = new List();
+    
+    _orderItems.forEach((key, value) { 
+      if (value != null) {
+        selectedOrderItems.add(value);
+      }
+    });
+
+    Navigator.of(context).push(
+        CupertinoPageRoute(
+            fullscreenDialog: true,
+            builder: (context) => OrderPage(selectedOrderItems)
+        )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -249,12 +266,7 @@ class PlaceProfileState extends State<PlaceProfile>{
                     )
                 ),
                 onPressed: () {
-                  Navigator.of(context).push(
-                      CupertinoPageRoute(
-                          fullscreenDialog: true,
-                          builder: (context) => OrderPage()
-                      )
-                  );
+                  goToOrderPage();
                 },
               ),
             ),
