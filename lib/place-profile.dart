@@ -8,6 +8,7 @@ import 'package:stretchy_header/stretchy_header.dart';
 import 'package:flutter/cupertino.dart';
 import './models/Place.dart';
 import './models/MenuItem.dart';
+import './models/OrderItem.dart';
 import 'package:http/http.dart' as http;
 
 class PlaceProfile extends StatefulWidget {
@@ -24,9 +25,9 @@ class PlaceProfile extends StatefulWidget {
 }
 
 class PlaceProfileState extends State<PlaceProfile>{
-  List<int> _selectedItems = new List();
-  Map<int, int> _itemOrderCount = new Map();
+  int _selectedItemsCount = 0;
   List<MenuItem> _menuItems = new List();
+  Map<int, OrderItem> _orderItems = new Map();
   Place _placeInfo;
 
   PlaceProfileState(Place place) {
@@ -60,44 +61,85 @@ class PlaceProfileState extends State<PlaceProfile>{
     });
   }
 
-  void _makeOrder(itemIndex) {
+  void _addToOrder(itemIndex) {
     setState(() {
-      _selectedItems.add(itemIndex);
-      _itemOrderCount[itemIndex] = 1;
+      var menuItemToAdd = _menuItems[itemIndex];
+      var newOrderItem = OrderItem.fromMenuItem(menuItemToAdd);
+      _orderItems[menuItemToAdd.id] = newOrderItem;
+
+      _selectedItemsCount++;
+    });
+  }
+
+  void _removeFromOrder(itemIndex) {
+    setState(() {
+      _orderItems[_menuItems[itemIndex].id] = null;
+      _selectedItemsCount--;
     });
   }
 
   void _increaseOrderCount(itemIndex) {
     setState(() {
-      _itemOrderCount[itemIndex]++;
+      var orderItem = _orderItems[_menuItems[itemIndex].id];
+      orderItem.count++;
     });
   }
 
   void _decreaseOrderCount(itemIndex) {
     setState(() {
-      _itemOrderCount[itemIndex]--;
-      if (_itemOrderCount[itemIndex] == 0) {
-        _selectedItems.remove(itemIndex);
+      var orderItem = _orderItems[_menuItems[itemIndex].id];
+      orderItem.count--;
+      if (orderItem.count == 0) {
+        _orderItems[_menuItems[itemIndex].id] = null;
+        _selectedItemsCount--;
       }
     });
   }
 
-  double _heightOfItem(itemIndex) {
-    if (_selectedItems.contains(itemIndex)) { return 50; }
+  int getOrderItemPrice(MenuItem item) {
+    var orderItem = _orderItems[item.id];
+    if (orderItem != null) {
+      return orderItem.totalPrice();
+    }
 
     return 0;
   }
 
-  String _getItemOrderCount(itemIndex) {
-    return _itemOrderCount[itemIndex].toString();
+  bool _isInOrder(MenuItem item) {
+    return _orderItems[item.id] != null;
+  }
+
+  double _heightOfItem(itemIndex) {
+    if (_orderItems[_menuItems[itemIndex].id] != null) { return 50; }
+
+    return 0;
+  }
+
+  int _getItemOrderCount(itemIndex) {
+    var item = _orderItems[_menuItems[itemIndex].id];
+    if (item != null) {
+      return item.count;
+    } else {
+      return 0;
+    }
   }
 
   bool _shouldShowOrderTotal() {
-    if (_selectedItems.length > 0) {
-      return true;
-    }
+    return _selectedItemsCount > 0;
+  }
 
-    return false;
+  String _getOrderTotalInfo() {
+    int totalCount = 0;
+    int totalPrice = 0;
+
+    _orderItems.forEach((key, value) {
+      if (value != null) {
+        totalCount += value.count;
+        totalPrice += value.totalPrice();
+      }
+    });
+
+    return '$totalCount  за  $totalPrice KZT';
   }
 
   @override
@@ -199,7 +241,7 @@ class PlaceProfileState extends State<PlaceProfile>{
                 ),
 
                 child: Text(
-                    '2  за  KZT 2500',
+                    _getOrderTotalInfo(),
                     style: GoogleFonts.openSans(
                       fontSize: 22,
                       decoration: TextDecoration.none,
@@ -260,7 +302,7 @@ class PlaceProfileState extends State<PlaceProfile>{
   Widget _buildMenuItem(context, itemIndex, MenuItem menuItem) {
     return InkWell(
         onTap: () {
-          _dishInfoModal(context, itemIndex);
+          _dishInfoModal(context, itemIndex, _isInOrder(menuItem));
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,7 +383,7 @@ class PlaceProfileState extends State<PlaceProfile>{
                     width: 50,
                     height: 30,
                     child: Text(
-                      _getItemOrderCount(itemIndex),
+                      _getItemOrderCount(itemIndex).toString(),
                       textAlign: TextAlign.center,
                       style: GoogleFonts.openSans(
                         color: Colors.grey[700],
@@ -365,7 +407,11 @@ class PlaceProfileState extends State<PlaceProfile>{
                   ),
 
                   Text(
-                    '2412'
+                    getOrderItemPrice(menuItem).toString(),
+                    style: GoogleFonts.openSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600
+                    ),
                   )
                 ],
               ),
@@ -384,7 +430,7 @@ class PlaceProfileState extends State<PlaceProfile>{
     );
   }
 
-  void _dishInfoModal(context, itemIndex) {
+  void _dishInfoModal(context, itemIndex, bool inOrder) {
     MenuItem selectedItem = _menuItems[itemIndex];
     showModalBottomSheet(context: context, builder: (BuildContext bc) {
       return Container(
@@ -451,21 +497,21 @@ class PlaceProfileState extends State<PlaceProfile>{
               width: double.infinity,
               height: 50,
               child: FlatButton(
-                color: Colors.blue,
+                color: (inOrder) ? Colors.red : Colors.blue,
                 textColor: Colors.white,
-                splashColor: Colors.blue[900],
+                splashColor: (inOrder) ? Colors.red[600] : Colors.blue[600],
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.0)
                 ),
                 child: Text(
-                    'Заказать',
+                    (inOrder) ? 'Убрать из заказа' : 'Заказать',
                     style: GoogleFonts.capriola(
                       fontSize: 18,
                       decoration: TextDecoration.none,
                     )
                 ),
                 onPressed: () {
-                  _makeOrder(itemIndex);
+                  (inOrder) ? _removeFromOrder(itemIndex) : _addToOrder(itemIndex);
                   Navigator.pop(context);
                 },
               ),
