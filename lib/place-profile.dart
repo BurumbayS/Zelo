@@ -167,7 +167,7 @@ class PlaceProfileState extends State<PlaceProfile>{
                   return _buildHeader();
                 }
 
-                return _buildMenuItem(context, index, _menuItems[index-1]);
+                return _buildMenuItem(context, index-1, _menuItems[index-1]);
               },
             ),
           ),
@@ -385,9 +385,14 @@ class PlaceProfileState extends State<PlaceProfile>{
   }
 
   void _dishInfoModal(context, itemIndex) {
+    MenuItem selectedItem = _menuItems[itemIndex];
     showModalBottomSheet(context: context, builder: (BuildContext bc) {
       return Container(
         height: 500,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(topRight: Radius.circular(10), topLeft: Radius.circular(10))
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -411,7 +416,7 @@ class PlaceProfileState extends State<PlaceProfile>{
               margin: EdgeInsets.only(right: 10, top: 10, left: 10),
               decoration: BoxDecoration(
                 image: DecorationImage(
-                    image: NetworkImage('https://www.gastronom.ru/binfiles/images/20191113/b50e9f2a.jpg'),
+                    image: NetworkImage(Network.host + selectedItem.image),
                     fit: BoxFit.cover
                 ),
                 borderRadius: BorderRadius.all(Radius.circular(10.0)),
@@ -422,7 +427,7 @@ class PlaceProfileState extends State<PlaceProfile>{
             Padding(
               padding: EdgeInsets.only(top: 20, left: 10),
               child: Text(
-                'Салат \"Цезарь\"',
+                selectedItem.name,
                  style: GoogleFonts.capriola(
                     color: Colors.black,
                     fontSize: 18,
@@ -436,7 +441,7 @@ class PlaceProfileState extends State<PlaceProfile>{
               child: Padding(
                 padding: EdgeInsets.only(left: 10, top: 5),
                 child: Text(
-                  'Зерновая булочка, сырный соус, халапеньо',
+                  selectedItem.description,
                 ),
               ),
             ),

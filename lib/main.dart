@@ -212,6 +212,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Welcome to Flutter',
       home: PlacesList(),
+      theme: ThemeData(
+        bottomSheetTheme: BottomSheetThemeData(
+            backgroundColor: Colors.black.withOpacity(0)),
+      ),
     );
   }
 }
