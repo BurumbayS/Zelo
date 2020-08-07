@@ -91,7 +91,7 @@ class OrderPageState extends State<OrderPage> {
   void _decreaseOrderCount(OrderItem item) {
     setState(() {
       if (item.count == 1) {
-        showDialog(context: context, builder: (_) => (Platform.isIOS) ? iosAlertDialog(item) : androidAlertDialog());
+        showDialog(context: context, builder: (_) => (Platform.isIOS) ? iosAlertDialog(item) : androidAlertDialog(item));
       } else {
         item.count--;
       }
@@ -103,9 +103,13 @@ class OrderPageState extends State<OrderPage> {
     orderListKey.currentState.removeItem(
         index,
         (context, animation) => _orderItem(context, item, animation),
-        duration: Duration(milliseconds: 300)
+        duration: Duration(milliseconds: 200)
     );
     _orderItems.removeAt(index);
+
+    if (_orderItems.length == 0) {
+      Navigator.pop(context);
+    }
   }
 
   Widget iosAlertDialog(OrderItem item) {
@@ -143,13 +147,14 @@ class OrderPageState extends State<OrderPage> {
           ),
           onPressed: () {
             _removeOrderItem(item);
+            Navigator.of(context, rootNavigator: true).pop();
           }
         )
       ],
     );
   }
 
-  Widget androidAlertDialog() {
+  Widget androidAlertDialog(OrderItem item) {
     return AlertDialog(
       title: Text(
           'Постойте!'
@@ -162,11 +167,18 @@ class OrderPageState extends State<OrderPage> {
           child: Text(
               'Нет'
           ),
+          onPressed: () {
+            Navigator.of(context, rootNavigator: true).pop();
+          }
         ),
         FlatButton(
           child: Text(
               'Да'
           ),
+          onPressed: () {
+            _removeOrderItem(item);
+            Navigator.of(context, rootNavigator: true).pop();
+          }
         )
       ],
     );
