@@ -99,7 +99,13 @@ class OrderPageState extends State<OrderPage> {
   }
 
   void _removeOrderItem(OrderItem item) {
-
+    var index = _orderItems.indexOf(item);
+    orderListKey.currentState.removeItem(
+        index,
+        (context, animation) => _orderItem(context, item, animation),
+        duration: Duration(milliseconds: 300)
+    );
+    _orderItems.removeAt(index);
   }
 
   Widget iosAlertDialog(OrderItem item) {
@@ -192,10 +198,12 @@ class OrderPageState extends State<OrderPage> {
         },
         child: Stack (
           children: <Widget>[
-            ListView.builder(
-                itemCount: _itemsCount(),
+            AnimatedList(
+                key: orderListKey,
+                initialItemCount: _itemsCount(),
+//                itemCount: _itemsCount(),
                 padding: const EdgeInsets.only(left: 10, right: 10, top: 10, bottom: 120),
-                itemBuilder: (context, i) {
+                itemBuilder: (context, i, animation) {
                   SectionType currentSection = _sections[_section];
 
                   if (currentSection == SectionType.order && _row > _orderItems.length) {
@@ -218,7 +226,7 @@ class OrderPageState extends State<OrderPage> {
 
                   switch (_sections[_section]) {
                     case SectionType.order:
-                      return _orderItem(context, _orderItems[_row - 2]);
+                      return _orderItem(context, _orderItems[_row - 2], animation);
                     case SectionType.address:
                       return _addressItem();
                     case SectionType.contactNumber:
@@ -303,8 +311,8 @@ class OrderPageState extends State<OrderPage> {
     );
   }
 
-  Widget _orderItem(context, OrderItem item) {
-    return InkWell(
+  Widget _orderItem(context, OrderItem item, animation) {
+    return SlideTransition (
       child: Column (
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -383,6 +391,11 @@ class OrderPageState extends State<OrderPage> {
           Divider()
         ],
       ),
+
+      position: Tween<Offset>(
+        begin: const Offset(-1, 0),
+        end: Offset.zero,
+      ).animate(animation),
     );
   }
 
