@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'map-page.dart';
 import 'package:dotted_line/dotted_line.dart';
 import './models/OrderItem.dart';
+import 'dart:io' show Platform;
 
 enum SectionType {
   order,
@@ -61,6 +62,7 @@ class OrderPageState extends State<OrderPage> {
   int _row = 0;
   List<SectionType> _sections = [SectionType.order, SectionType.address, SectionType.contactNumber, SectionType.payment];
   List<OrderItem> _orderItems;
+  final GlobalKey<AnimatedListState> orderListKey = GlobalKey<AnimatedListState>();
 
   final _phoneTextFieldController = TextEditingController();
   FocusNode _focus = new FocusNode();
@@ -88,12 +90,80 @@ class OrderPageState extends State<OrderPage> {
 
   void _decreaseOrderCount(OrderItem item) {
     setState(() {
-      item.count--;
-      if (item.count == 0) {
-        _orderItems[_menuItems[itemIndex].id] = null;
-        _selectedItemsCount--;
+      if (item.count == 1) {
+        showDialog(context: context, builder: (_) => (Platform.isIOS) ? iosAlertDialog(item) : androidAlertDialog());
+      } else {
+        item.count--;
       }
     });
+  }
+
+  void _removeOrderItem(OrderItem item) {
+
+  }
+
+  Widget iosAlertDialog(OrderItem item) {
+    return CupertinoAlertDialog(
+      title: Text(
+        'Постойте!',
+          style: GoogleFonts.capriola(
+              fontSize: 18
+          )
+      ),
+      content: Text(
+        'Вы точно хотите убрать блюдо из заказа?',
+          style: GoogleFonts.capriola(
+              fontSize: 15
+          )
+      ),
+      actions: <Widget>[
+        CupertinoDialogAction(
+          child: Text(
+            'Нет',
+            style: GoogleFonts.capriola(
+              fontSize: 15
+            )
+          ),
+          onPressed: () {
+            Navigator.of(context, rootNavigator: true).pop();
+          }
+        ),
+        CupertinoDialogAction(
+          child: Text(
+              'Да',
+              style: GoogleFonts.capriola(
+                  fontSize: 15
+              )
+          ),
+          onPressed: () {
+            _removeOrderItem(item);
+          }
+        )
+      ],
+    );
+  }
+
+  Widget androidAlertDialog() {
+    return AlertDialog(
+      title: Text(
+          'Постойте!'
+      ),
+      content: Text(
+          'Вы точно хотите убрать блюдо из заказа?'
+      ),
+      actions: <Widget>[
+        FlatButton(
+          child: Text(
+              'Нет'
+          ),
+        ),
+        FlatButton(
+          child: Text(
+              'Да'
+          ),
+        )
+      ],
+    );
   }
 
   OrderPageState(List<OrderItem> items) {
@@ -281,7 +351,7 @@ class OrderPageState extends State<OrderPage> {
               children: <Widget>[
                 GestureDetector(
                   onTap: () {
-
+                    _decreaseOrderCount(item);
                   },
                   child: Container(
                     margin: EdgeInsets.only(left: 16),
@@ -297,7 +367,7 @@ class OrderPageState extends State<OrderPage> {
 
                 GestureDetector(
                   onTap: () {
-
+                    _increaseOrderCount(item);
                   },
                   child: Container(
                     margin: EdgeInsets.only(right: 16),
