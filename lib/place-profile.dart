@@ -47,7 +47,6 @@ class PlaceProfileState extends State<PlaceProfile>{
     var response = await http.get(url);
 
     var itemsJson = json.decode(response.body).cast<Map<String, dynamic>>();
-    print(itemsJson[0]);
 
     var menuItemsList = new List<MenuItem>();
 

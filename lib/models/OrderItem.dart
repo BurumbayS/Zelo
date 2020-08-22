@@ -1,5 +1,9 @@
 import 'package:ZeloApp/models/MenuItem.dart';
-import 'package:ZeloApp/order-page.dart';
+import 'package:json_annotation/json_annotation.dart';
+
+part 'OrderItem.g.dart';
+
+@JsonSerializable()
 
 class OrderItem {
   int id;
@@ -7,12 +11,12 @@ class OrderItem {
   int price;
   int count;
 
+  OrderItem(this.id, this.name, this.price, this.count);
+
   static OrderItem fromMenuItem(MenuItem item) {
-    OrderItem orderItem = new OrderItem();
-    orderItem.id = item.id;
-    orderItem.name = item.name;
-    orderItem.price = item.price;
-    orderItem.count = 1;
+    OrderItem orderItem = new OrderItem(
+        item.id, item.name, item.price, 1
+    );
 
     return orderItem;
   }
@@ -20,5 +24,9 @@ class OrderItem {
   int totalPrice() {
     return count * price;
   }
+
+  factory OrderItem.fromJson(Map<String, dynamic> json) => _$OrderItemFromJson(json);
+
+  Map<String, dynamic> toJson() => _$OrderItemToJson(this);
 
 }

@@ -1,12 +1,17 @@
+import 'dart:convert';
+
 import 'package:ZeloApp/models/Address.dart';
 import 'package:flutter/material.dart';
-import 'completed-order-page.dart';
+import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/cupertino.dart';
 import 'map-page.dart';
 import 'package:dotted_line/dotted_line.dart';
 import './models/OrderItem.dart';
+import './models/Order.dart';
 import 'dart:io' show Platform;
+
+import 'models/Network.dart';
 
 enum SectionType {
   order,
@@ -60,15 +65,17 @@ class OrderPageState extends State<OrderPage> {
   String _contactNumber = '';
   int _section = 0;
   int _row = 0;
+  Order _order = new Order();
+
   List<SectionType> _sections = [SectionType.order, SectionType.address, SectionType.contactNumber, SectionType.payment];
-  List<OrderItem> _orderItems;
+//  List<OrderItem> _orderItems;
   final GlobalKey<AnimatedListState> orderListKey = GlobalKey<AnimatedListState>();
 
   final _phoneTextFieldController = TextEditingController();
   FocusNode _focus = new FocusNode();
 
   bool _orderCompleted() {
-    return (_address.firstAddress != '' && _contactNumber.length == 11);
+    return (_order.deliveryAddress.firstAddress != '' && _order.contactPhone.length == 11);
   }
 
   int _itemsCount() {
@@ -76,10 +83,19 @@ class OrderPageState extends State<OrderPage> {
 
     _sections.forEach((section) {
       itemsCount++;
-      itemsCount += (section == SectionType.order) ? _orderItems.length : section.rowCount;
+      itemsCount += (section == SectionType.order) ? _order.orderItems.length : section.rowCount;
     });
 
     return itemsCount;
+  }
+
+  int _orderItemsTotal() {
+    int total = 0;
+    _order.orderItems.forEach((element) {
+      total += element.totalPrice();
+    });
+
+    return total;
   }
 
   void _increaseOrderCount(OrderItem item) {
@@ -99,15 +115,15 @@ class OrderPageState extends State<OrderPage> {
   }
 
   void _removeOrderItem(OrderItem item) {
-    var index = _orderItems.indexOf(item);
+    var index = _order.orderItems.indexOf(item);
     orderListKey.currentState.removeItem(
         index,
         (context, animation) => _orderItem(context, item, animation),
         duration: Duration(milliseconds: 200)
     );
-    _orderItems.removeAt(index);
+    _order.orderItems.removeAt(index);
 
-    if (_orderItems.length == 0) {
+    if (_order.orderItems.length == 0) {
       Navigator.pop(context);
     }
   }
@@ -185,7 +201,7 @@ class OrderPageState extends State<OrderPage> {
   }
 
   OrderPageState(List<OrderItem> items) {
-    _orderItems = items;
+    _order.orderItems = items;
   }
 
   @override
@@ -218,7 +234,7 @@ class OrderPageState extends State<OrderPage> {
                 itemBuilder: (context, i, animation) {
                   SectionType currentSection = _sections[_section];
 
-                  if (currentSection == SectionType.order && _row > _orderItems.length) {
+                  if (currentSection == SectionType.order && _row > _order.orderItems.length) {
                     (_section == _sections.length - 1) ? _section = 0 : _section++;
                     currentSection = _sections[_section];
                     _row = 0;
@@ -238,7 +254,7 @@ class OrderPageState extends State<OrderPage> {
 
                   switch (_sections[_section]) {
                     case SectionType.order:
-                      return _orderItem(context, _orderItems[_row - 2], animation);
+                      return _orderItem(context, _order.orderItems[_row - 2], animation);
                     case SectionType.address:
                       return _addressItem();
                     case SectionType.contactNumber:
@@ -285,10 +301,20 @@ class OrderPageState extends State<OrderPage> {
                           fontWeight: FontWeight.bold
                       )
                   ),
-                  onPressed: () {
-                    Navigator.push(context, CupertinoPageRoute(
-                        builder: (context) => CompletedOrderPage()
-                    ));
+                  onPressed: () async {
+                    _order.placeID = 1;
+                    final http.Response response = await http.post(
+                      Network.host + "/order/",
+                      headers: <String, String>{
+                        'Content-Type': 'application/json; charset=UTF-8',
+                      },
+                      body: jsonEncode(_order)
+                    );
+
+                    print(response.body);
+//                    Navigator.push(context, CupertinoPageRoute(
+//                        builder: (context) => CompletedOrderPage()
+//                    ));
                   },
                 ),
               ),
@@ -417,13 +443,13 @@ class OrderPageState extends State<OrderPage> {
         final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => MapSearchPage(_address),
+              builder: (context) => MapSearchPage(_order.deliveryAddress),
             )
         );
 
         if (result != null) {
           setState(() {
-            _address = result;
+            _order.deliveryAddress = result;
           });
         }
       },
@@ -443,7 +469,7 @@ class OrderPageState extends State<OrderPage> {
   }
 
   Widget _addressLine() {
-    if (_address.firstAddress == '') {
+    if (_order.deliveryAddress.firstAddress == '') {
       return Text(
         'Укажите адрес',
         style: GoogleFonts.openSans(
@@ -457,7 +483,7 @@ class OrderPageState extends State<OrderPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          _address.firstAddress,
+          _order.deliveryAddress.firstAddress,
           maxLines: 2,
           style: GoogleFonts.openSans(
               fontSize: 16,
@@ -466,7 +492,7 @@ class OrderPageState extends State<OrderPage> {
         ),
 
         Text(
-          _address.secondAddress,
+          _order.deliveryAddress.secondAddress,
           style: GoogleFonts.openSans(
               fontSize: 14,
               color: Colors.grey[700]
@@ -489,7 +515,7 @@ class OrderPageState extends State<OrderPage> {
             keyboardType: TextInputType.number,
             onChanged: (number) {
                 setState(() {
-                  _contactNumber = number;
+                  _order.contactPhone = number;
                 });
             },
             decoration: InputDecoration(
@@ -535,7 +561,7 @@ class OrderPageState extends State<OrderPage> {
               ),
 
               Text(
-                'KZT 2300',
+                'KZT ' + _orderItemsTotal().toString(),
                 style: GoogleFonts.openSans(
                   fontSize: 17,
                 ),
@@ -564,7 +590,7 @@ class OrderPageState extends State<OrderPage> {
                 ),
 
                 Text(
-                  'KZT 2300',
+                  'KZT ' + _order.deliveryPrice.toString(),
                   style: GoogleFonts.openSans(
                       fontSize: 17,
                   ),
@@ -592,7 +618,7 @@ class OrderPageState extends State<OrderPage> {
               ),
 
               Text(
-                'KZT ' + _address.distance.toString(),
+                'KZT ' + (_orderItemsTotal() + _order.deliveryPrice).toString(),
                 style: GoogleFonts.openSans(
                     fontSize: 17,
                     fontWeight: FontWeight.bold
