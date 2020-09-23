@@ -38,6 +38,7 @@ dependencies:
   dotted_line: ^2.0.0
   http: ^0.12.2
   json_annotation: ^3.0.1
+  web_socket_channel: ^1.1.0
 
 dev_dependencies:
   flutter_test:

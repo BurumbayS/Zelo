@@ -28,7 +28,7 @@ class PlacesListState extends State<PlacesList> {
   }
 
   void loadPlaces() async {
-    String url = Network.host + '/places/';
+    String url = Network.api + '/places/';
     var response = await http.get(url);
 
     var placesJson = json.decode(response.body).cast<Map<String, dynamic>>();

@@ -43,7 +43,7 @@ class PlaceProfileState extends State<PlaceProfile>{
 
   void loadMenuItems() async {
     var placeID = _placeInfo.id;
-    String url = Network.host + '/menuItems/$placeID';
+    String url = Network.api + '/menuItems/$placeID';
     var response = await http.get(url);
 
     var itemsJson = json.decode(response.body).cast<Map<String, dynamic>>();

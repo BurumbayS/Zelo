@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:web_socket_channel/io.dart';
+import 'completed-order-page.dart';
 import 'map-page.dart';
 import 'package:dotted_line/dotted_line.dart';
 import './models/OrderItem.dart';
@@ -302,19 +304,19 @@ class OrderPageState extends State<OrderPage> {
                       )
                   ),
                   onPressed: () async {
-                    _order.placeID = 1;
-                    final http.Response response = await http.post(
-                      Network.host + "/order/",
-                      headers: <String, String>{
-                        'Content-Type': 'application/json; charset=UTF-8',
-                      },
-                      body: jsonEncode(_order)
-                    );
-
-                    print(response.body);
-//                    Navigator.push(context, CupertinoPageRoute(
-//                        builder: (context) => CompletedOrderPage()
-//                    ));
+//                    _order.placeID = 1;
+//                    final http.Response response = await http.post(
+//                      Network.host + "/order/",
+//                      headers: <String, String>{
+//                        'Content-Type': 'application/json; charset=UTF-8',
+//                      },
+//                      body: jsonEncode(_order)
+//                    );
+//
+//                    print(response.body);
+                    Navigator.push(context, CupertinoPageRoute(
+                        builder: (context) => CompletedOrderPage()
+                    ));
                   },
                 ),
               ),
