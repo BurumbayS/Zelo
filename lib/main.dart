@@ -7,8 +7,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:google_fonts/google_fonts.dart';
-import './place-profile.dart';
-import './models/Network.dart';
+import 'pages/place-profile.dart';
+import 'services/Network.dart';
 import 'package:http/http.dart' as http;
 
 import 'models/Place.dart';

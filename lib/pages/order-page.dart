@@ -9,11 +9,11 @@ import 'package:web_socket_channel/io.dart';
 import 'completed-order-page.dart';
 import 'map-page.dart';
 import 'package:dotted_line/dotted_line.dart';
-import './models/OrderItem.dart';
-import './models/Order.dart';
+import '../models/OrderItem.dart';
+import '../models/Order.dart';
 import 'dart:io' show Platform;
 
-import 'models/Network.dart';
+import '../services/Network.dart';
 
 enum SectionType {
   order,
@@ -269,7 +269,7 @@ class OrderPageState extends State<OrderPage> {
                 }
             ),
 
-            Positioned(
+            Positioned (
               bottom: (_focus.hasFocus) ? -50 : 50,
               left: MediaQuery.of(context).size.width * 0.1,
 

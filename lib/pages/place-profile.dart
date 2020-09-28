@@ -1,14 +1,17 @@
 import 'dart:convert';
 
-import 'package:ZeloApp/models/Network.dart';
-import 'package:ZeloApp/order-page.dart';
+import 'package:ZeloApp/pages/auth/auth-page.dart';
+import 'package:ZeloApp/services/Network.dart';
+import 'package:ZeloApp/pages/order-page.dart';
+import 'package:ZeloApp/services/Storage.dart';
+import 'package:ZeloApp/utils/alertDialog.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:stretchy_header/stretchy_header.dart';
 import 'package:flutter/cupertino.dart';
-import './models/Place.dart';
-import './models/MenuItem.dart';
-import './models/OrderItem.dart';
+import '../models/Place.dart';
+import '../models/MenuItem.dart';
+import '../models/OrderItem.dart';
 import 'package:http/http.dart' as http;
 
 class PlaceProfile extends StatefulWidget {
@@ -156,6 +159,36 @@ class PlaceProfileState extends State<PlaceProfile>{
             builder: (context) => OrderPage(selectedOrderItems)
         )
     );
+  }
+
+  void orderItem(bool inOrder, int itemIndex) async {
+    bool _isAuthenticated = await isAuthenticated();
+
+    if (!_isAuthenticated) {
+      showDialog(context: context, builder: (_) => CustomAlertDialog.shared.dialog("Хотите зарегестрироваться?\n", "Для заказа блюда вам необходимо зарегестрироваться", false, context, () {
+          Navigator.pop(context);
+          Navigator.of(context).push(
+              CupertinoPageRoute(
+                  fullscreenDialog: true,
+                  builder: (context) => AuthPage()
+              )
+          );
+        })
+      );
+    } else {
+      (inOrder) ? _removeFromOrder(itemIndex) : _addToOrder(itemIndex);
+      Navigator.pop(context);
+    }
+
+  }
+
+  Future<bool> isAuthenticated() async {
+    String value = await Storage.itemBy('token');
+    if (value != null) {
+      return true;
+    }
+
+    return false;
   }
 
   @override
@@ -522,8 +555,7 @@ class PlaceProfileState extends State<PlaceProfile>{
                     )
                 ),
                 onPressed: () {
-                  (inOrder) ? _removeFromOrder(itemIndex) : _addToOrder(itemIndex);
-                  Navigator.pop(context);
+                  orderItem(inOrder, itemIndex);
                 },
               ),
 
