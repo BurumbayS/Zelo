@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:ZeloApp/services/Network.dart';
+import 'package:ZeloApp/services/Storage.dart';
 import 'package:ZeloApp/utils/alertDialog.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -47,7 +48,19 @@ class AuthPageState extends State<AuthPage> {
       }),
     );
 
-    print(response.body);
+    var responseJson = json.decode(response.body);
+    if (responseJson['code'] == 0) {
+      Storage.shared.setItem("token", responseJson['token'].toString());
+      Navigator.pop(context);
+    } else {
+      showDialog(context: context, builder: (_) =>
+          CustomAlertDialog.shared.dialog("Ошибка!",
+              responseJson['error'].toString(),
+              true,
+              context, () {
+
+              }));
+    }
   }
 
   void register() async {
@@ -439,7 +452,7 @@ class AuthPageState extends State<AuthPage> {
                 )
             ),
             onPressed: () {
-//                goToOrderPage();
+              login();
             },
           ),
         ),
